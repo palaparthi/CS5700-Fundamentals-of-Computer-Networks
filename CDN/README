@@ -1,0 +1,20 @@
+Roll Your Own CDN
+
+High-level approach:
+
+In this project we try to build a CDN. Majorly we are going to create a system which  maps clients to good replica servers.
+In this project we implement dnsserver and httpserver.
+
+In dnsserver, we didn't use any libraries, we build the server by creating sockets. We unpack the DNS record and parse it and get the domain name the client requests. Then pack the DNS with DNS answer and return a well formed response with a specific IP address.
+
+IP Geolocation
+We pinged http://ipinfo.io using curl and split the the Json response to get the latitude and longitude, using the measurements we get the closest replica server to the client.
+
+In httpserver, we built a webserver without any libraries, libraries were used for parsing, httpserver returns content returned by client. In order to amplify the performance of the http server, we use memory cache to store the data in the cache. If the cache is full we replace Least Recently Used(LRU) with the new data. This is done by maintaining a list of number of cache hits.
+
+Challenges
+1. This was the most difficult project in term of understanding the approach.
+2. We faced difficulty in unpacking and packing it with answer and sending the DNS response.
+3. The other major challenge was not using libraries such as BaseHttpServer etc.
+
+

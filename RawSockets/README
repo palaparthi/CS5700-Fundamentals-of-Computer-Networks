@@ -1,0 +1,53 @@
+Team: kailashsandeep
+Team Members
+------------
+1. Sree Siva Sandeep Palaparthi (001216417)
+2. Kailash Natarajan
+
+To run the program
+-------------------
+sudo ./rawhttpget URL
+
+ex: sudo ./rawhttpget  http://david.choffnes.com/classes/cs4700sp17/50MB.log
+
+Design
+-------
+This project is implemented using python 2.7. The goal of the project is to implement entire Internet protocol stack using raw sockets. When you run the file using ./rawhttpget URL, the file given in the URL gets downloaded. If the url ends with '/' or no path is given then it downloads index.html
+	We built two raw sockets for one for sending and the other for receiving and build the entire internet protocol stack. We have implemented checksum validation, 3 way handshake, connection teardown, congestion window where 1<=cwnd<=1000, packet retransmission after 1 minute and timeout after 3 minutes.
+
+
+Challenges faced
+----------------
+1. Initially we selected a static port number, when te previous run is keyboard interupted using crtl+c the next run is flooded with previous run's packet.
+2. checksum validation was tedious, had to search a lot online to get it right.
+3. Unpacking of tcp and ip packets was hard too and it took us lot of trial and error to get it right.
+
+Test cases
+----------
+sudo ./rawhttpget  http://david.choffnes.com/classes/cs4700sp17/50MB.log
+output: 50MB.log gets downloaded
+
+sudo ./rawhttpget  http://david.choffnes.com/classes/cs4700sp17/
+output: downloads index.html
+
+sudo ./rawhttpget http://www.ccis.northeastern.edu
+output: Error: incorrect status code recieved, expected status code 200
+
+sudo ./rawhttpget
+output: Error: Invalid arguments
+
+sudo ./rawhttpget
+output: Error: enter correct URL
+
+References
+----------
+http://www.binarytides.com/raw-socket-programming-in-python-linux/
+
+
+
+
+
+
+
+
+

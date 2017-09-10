@@ -1,0 +1,47 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*- 
+import socket
+import sys
+import ssl
+
+args_len=len(sys.argv)
+if args_len==3:
+     Host_Name=sys.argv[1]
+     TCP_PORT = 27993
+elif args_len==4:
+     Host_Name=sys.argv[2]
+     TCP_PORT = 27993
+elif args_len==5:
+     Host_Name=sys.argv[3]
+     TCP_PORT=int(sys.argv[2])
+elif args_len==6:
+     Host_Name=sys.argv[4]
+     TCP_PORT=int(sys.argv[2])
+TCP_IP=socket.gethostbyname_ex(Host_Name)
+p = TCP_IP[2][0]
+BUFFER_SIZE = 1024
+MESSAGE = "cs5700spring2017 HELLO 001216417\n"
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+s.connect((p, TCP_PORT))
+while 1:
+    s.send(MESSAGE)
+    data = s.recv(BUFFER_SIZE)
+    tokens=data.split(" ")
+    if tokens[2]=="BYE\n":
+        secret_flag=tokens[1] 
+        print secret_flag
+        break
+    if tokens[1]=="STATUS":
+        operator=tokens[3]
+        i=int(tokens[2])
+        j=int(tokens[4])
+        if operator=="+":
+            ans = i + j
+        elif operator=="-":
+            ans = i - j
+        elif operator=="*":
+            ans = i * j
+        elif operator=="/":
+            ans = i / j
+    MESSAGE="cs5700spring2017 "+ str(ans) +" \n"
+s.close()

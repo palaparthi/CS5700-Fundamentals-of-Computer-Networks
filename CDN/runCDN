@@ -1,0 +1,24 @@
+#!/bin/bash
+
+
+list_of_hosts=(ec2-52-90-80-45.compute-1.amazonaws.com
+ec2-54-183-23-203.us-west-1.compute.amazonaws.com
+ec2-54-70-111-57.us-west-2.compute.amazonaws.com
+ec2-52-215-87-82.eu-west-1.compute.amazonaws.com
+ec2-52-28-249-79.eu-central-1.compute.amazonaws.com
+ec2-54-169-10-54.ap-southeast-1.compute.amazonaws.com
+ec2-52-62-198-57.ap-southeast-2.compute.amazonaws.com
+ec2-52-192-64-163.ap-northeast-1.compute.amazonaws.com
+ec2-54-233-152-60.sa-east-1.compute.amazonaws.com)
+
+echo "Starting DNS server"
+ssh -i ${10} $8@cs5700cdnproject.ccs.neu.edu "chmod 777 dnsserver"
+ssh -i ${10} $8@cs5700cdnproject.ccs.neu.edu "./dnsserver -p $2 -n $6 < /dev/null > ./mylogfile 2>&1 &"
+
+hosts=${#list_of_hosts[@]}
+for ((i=0;i<${hosts};i++));
+do
+    echo "Starting HTTP server in " ${list_of_hosts[$i]
+    ssh -i ${10} $8@${list_of_hosts[$i]} "chmod 777 httpserver.py"
+    ssh -i ${10} $8@${list_of_hosts[$i]} "./httpserver -p $2 -o $4 <dev/null > ./mylogfile 2>&1 &"
+done

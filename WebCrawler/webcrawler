@@ -1,0 +1,145 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+import socket,re,sys
+from bs4 import BeautifulSoup
+from collections import deque
+from urlparse import urlparse
+sys.setrecursionlimit(10000)
+redirection_location=""
+session_id_after_login=""
+csrf_token=""
+counter=0
+q = deque()
+visited= []
+# connect is used to connet to the server cs5700.ccs.neu.edu
+def connect():
+    # we are making an TCP connection
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    host = socket.gethostbyname_ex("cs5700sp17.ccs.neu.edu")
+    port = 80
+    s.connect((host[2][0], port))
+    return s
+# The login function is used to login to the fakebook, it takes two arguments username and password
+def login(username, password):
+    # two global variables redirection_location session_id_after_login are used to store next web page to be
+    # crawled of after login and session id  returned after login respectively.
+    global redirection_location
+    global session_id_after_login
+    content = "csrfmiddlewaretoken=" + str(
+        csrf_token_id[1]) + "&username=" + username + "&password=" + password + "&" + "next=/fakebook/\r\n"
+    host = "Host: cs5700sp17.ccs.neu.edu\r\n"
+    message = "POST /accounts/login/ HTTP 1.1\r\n"
+    contentLength = "Content-Length: " + str(len(content)) + "\r\n"
+    contentType = "Content-Type: application/x-www-form-urlencoded\r\n"
+    connection = "Connection: keep-alive\r\n\r\n"
+    cookie = "Cookie: " + csrf_token + "; " + session_id + "\r\n"
+    # POST is an aspect of HTTP protocol and POST is used for authentication. we bundle all the parameters required like
+    #host, content length, content type, csrf_token,session_id etc
+    sock = connect()
+    # connecting to the server
+    finalMessage = message + host  + contentLength  + contentType + cookie + connection + content
+    sock.send(finalMessage)
+    val4 = sock.recv(10000)
+    data = val4.splitlines()
+    status_code=data[0].split(" ")[1]
+    if(status_code=="302"):
+        # status code 302 means that there is a redirection, the redirected location and session id are split
+        # from the response and stored
+        redirection_location = data[9].split()[1]
+        session_id_after_login = data[7].split(" ")[1].split("=")[1].split(";")[0]
+        #closing the connection
+        sock.close()
+        return redirection_location
+    else:
+        # else is executed when there the credentials are invalid
+        print "Error: Invalid Login Credentials"
+        exit()
+
+def web_crawler(main_page):
+    global counter
+    global session_id_after_login
+    global csrf_token_id
+    # counter is maintained for the secret flags if counter equals to 5
+    if counter==5:
+        exit()
+    sock=connect()
+    # GET in HTTP is used to get the page from server, basic information such as host, connection and cookie information is passed
+    get_crawler = "GET " + main_page + " HTTP/1.1\r\n"
+    get_host = "Host: cs5700sp17.ccs.neu.edu\r\n"
+    get_connection = "Connection: keep-alive\r\n"
+    get_cache = "Cache-Control: max-age=0\r\n"
+    get_cookie = "Cookie: csrftoken=" + str(csrf_token_id[1]) + "; sessionid=" + session_id_after_login + "\r\n\r\n"
+    get_msg=get_crawler + get_host + get_connection + get_cache + get_cookie
+    sock.send(get_msg)
+    page = sock.recv(10000)
+    global q
+    global visited
+    page_split = page.splitlines()
+    status_cd = page_split[0].split()[1]
+    if status_cd=="200":
+        #status code 200 means everything is ok
+        soup = BeautifulSoup(page, 'html.parser')
+        #The pattern returned should be /fakebook/(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+
+        url_pattern = '/fakebook/(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
+        pat=re.compile(url_pattern)
+        # append the page to visited lit to maintain the list of all the visited pages
+        visited.append(main_page)
+        # using beautiful soup find all anchor tags
+        for links in soup.find_all('a'):
+            # check if the link is not in q and visited and then append it to the q
+            if links.get('href') not in q and links.get('href')!="/fakebook/" and pat.match(links.get('href')) and links.get('href') not in visited:
+                q.append(links.get('href'))
+        for links in soup.find_all("h2",{"class": "secret_flag"}):
+            flags= links.text.splitlines()
+            secret_flags=flags[0].split(": ")[1]
+            print str(secret_flags)
+            counter=counter+1
+
+        if q:
+            pop = q.popleft()
+            web_crawler(pop)
+
+    elif status_cd=="500":
+        # status code 500 means internal server error, we should try to connect to the page again until sucessful
+        web_crawler(main_page)
+    elif status_cd == "403" or status_cd == "404":
+        # 403, 404 status means forbidden and page not found we should append to the visited and leave the page
+            visited.append(main_page)
+            return 0
+    elif status_cd=="301":
+        # split the page and get the redirection link
+        redirect_301= page_split[5].split()[1]
+        visited.append(main_page)
+        if redirect_301 not in q and redirect_301 not in visited:
+            #if the link is not in q or visited add it to the q
+            q.append(redirect_301)
+    else: return 0
+    # closing the socket
+    sock.close()
+
+sock=connect()
+sock.sendall("GET /accounts/login/?next=/fakebook/ HTTP 1.1\nHost:cs5700sp17.ccs.neu.edu \r\n\r\n")
+val = sock.recv(10000)
+sock.close()
+
+# usernama and password are taken from command line
+global username
+global password
+username=sys.argv[1]
+password=sys.argv[2]
+# The response is split and csrf token and session id are extracted
+get_value=val.splitlines()
+csrf_token = get_value[7].split(";")[0].split(": ")[1]
+csrf_token_id=csrf_token.split("=")
+session_id = get_value[8].split(";")[0].split(": ")[1]
+# Call the login function with username and password as the parameters
+main_page=login(username,password)
+if "%" not in main_page:
+    web_crawler(main_page)
+else:
+    # '%' characters if any are removed
+    parsed_url1=urlparse(main_page)
+    strip_url= parsed_url1.path.split("%")[0]
+    web_crawler(strip_url)
+
+
