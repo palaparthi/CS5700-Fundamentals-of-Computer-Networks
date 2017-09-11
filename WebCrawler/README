@@ -1,6 +1,6 @@
 HIGH LEVEL APPROACH
 
-1. The project aims to implement a webcrawler, which can collect/scourge data from a social networking site - [Fakebook] (http://cs5700sp17.ccs.neu.edu) including the collection of 5 secret flags which are hidden in the HTML headers.
+1. The project aims to implement a webcrawler, which can collect/scourge data from a social networking site - [Fakebook](http://cs5700sp17.ccs.neu.edu) including the collection of 5 secret flags which are hidden in the HTML headers.
 2. Through GET and POST messages in HTTP, we are establishing login session using username and password, csrftoken and collecting the IDs to create successive sessions using those IDs.
 3. These IDs are then sent to the server and the program deals with the status code from the server, through which other links are opened to scourge for more flags.
 4. To facilitate crawling in all the links, we are establishing a loop, through which all the links are visited and flags are gathered, the program exits after collecting 5 flags.
