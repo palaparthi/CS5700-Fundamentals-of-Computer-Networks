@@ -6,7 +6,3 @@ Next the Hello message is passed to the server and mathematical expresions are r
 Later, the expressions are executed in a loop until a BYE is sent from the server.
 Finally, a secret flag is sent from the server with BYE which is prnted.
 
-CHALLENGES
-
-I first tried to implement it using C. I was able to receive mathematical expressions for the first time however, I was not able to recieve response in a loop.
-So, I changed to python. 
